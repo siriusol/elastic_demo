@@ -12,16 +12,8 @@ import (
 
 func main() {
 	ctx := context.Background()
+	client := GetEsClient()
 	confJson := readConfJson()
-	opts := []elastic.ClientOptionFunc{
-		elastic.SetURL(confJson.Url),
-		elastic.SetBasicAuth(confJson.Username, confJson.Password),
-		elastic.SetSniff(false),
-	}
-	client, err := elastic.NewClient(opts...)
-	if err != nil {
-		panic(err)
-	}
 	info, code, err := client.Ping(confJson.Url).Do(ctx)
 	if err != nil {
 		panic(err)
@@ -60,4 +52,19 @@ func readConfJson() EsConfJson {
 		panic(err)
 	}
 	return confJson
+}
+
+func GetEsClient() *elastic.Client {
+	confJson := readConfJson()
+	opts := []elastic.ClientOptionFunc{
+		elastic.SetURL(confJson.Url),
+		elastic.SetBasicAuth(confJson.Username, confJson.Password),
+		elastic.SetSniff(false),
+	}
+	client, err := elastic.NewClient(opts...)
+	if err != nil {
+		panic(err)
+	}
+
+	return client
 }
