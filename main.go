@@ -13,14 +13,12 @@ import (
 func main() {
 	ctx := context.Background()
 	confJson := readConfJson()
-	sniff := false
-	esConfig := config.Config{
-		URL:      confJson.Url,
-		Username: confJson.Username,
-		Password: confJson.Password,
-		Sniff:    &sniff,
+	opts := []elastic.ClientOptionFunc{
+		elastic.SetURL(confJson.Url),
+		elastic.SetBasicAuth(confJson.Username, confJson.Password),
+		elastic.SetSniff(false),
 	}
-	client, err := elastic.NewClientFromConfig(&esConfig)
+	client, err := elastic.NewClient(opts...)
 	if err != nil {
 		panic(err)
 	}
@@ -29,12 +27,26 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("ES returned with code %d and version %s\n", code, info.Version.Number)
+	fmt.Printf("ES info: %s\n", GetLogString(info))
 
 	esVersion, err := client.ElasticsearchVersion(confJson.Url)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("ES version %s\n", esVersion)
+
+	client.IndexGet()
+}
+
+func initClientFromConfig(confJson EsConfJson) (*elastic.Client, error) {
+	sniff := false
+	esConfig := config.Config{
+		URL:      confJson.Url,
+		Username: confJson.Username,
+		Password: confJson.Password,
+		Sniff:    &sniff,
+	}
+	return elastic.NewClientFromConfig(&esConfig)
 }
 
 func readConfJson() EsConfJson {
